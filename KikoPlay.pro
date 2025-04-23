@@ -4,7 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui sql network concurrent websockets xml webenginewidgets openglwidgets opengl
+QT       += core gui sql network concurrent websockets xml webenginewidgets opengl
+# QT       += openglwidgets
 linux:QT += dbus
 #win32:QT += winextras
 

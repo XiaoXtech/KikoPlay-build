@@ -46,10 +46,10 @@ jobs:
           # Target platform for build
           # target: ${{ matrix.qt_target }}
           arch: ${{ matrix.qt_arch }}
-#          cached: 'false'
-#          aqtversion: '==2.0.5'          
+          cached: 'false'
+          aqtversion: '==2.0.5'          
       # 拉取代码
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
       # msvc编译

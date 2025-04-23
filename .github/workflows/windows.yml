@@ -3,7 +3,7 @@ on:
   # push代码时触发workflow
   push:
     paths:
-      - 'build.pro'
+      - '*.pro'
       - 'src/**'
       - '.github/workflows/windows.yml'
 #  pull_request:
@@ -46,8 +46,8 @@ jobs:
           # Target platform for build
           # target: ${{ matrix.qt_target }}
           arch: ${{ matrix.qt_arch }}
-          cached: 'false'
-          aqtversion: '==2.0.5'          
+#          cached: 'false'
+#          aqtversion: '==2.0.5'          
       # 拉取代码
       - uses: actions/checkout@v4
         with:
@@ -78,7 +78,7 @@ jobs:
            echo "::set-output name=packageName::$name"       
       # tag 查询github-Release
       # 上传artifacts          
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.package.outputs.packageName }}
           path: ${{ steps.package.outputs.packageName }}

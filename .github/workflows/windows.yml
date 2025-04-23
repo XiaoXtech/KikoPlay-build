@@ -46,7 +46,7 @@ jobs:
           # Target platform for build
           # target: ${{ matrix.qt_target }}
           arch: ${{ matrix.qt_arch }}
-          modules: 'qtcharts qtdatavis3d qtpurchasing qtvirtualkeyboard qtwebengine qtnetworkauth qtwebglplugin qtscript'
+          modules: 'qtcharts qtdatavis3d qtpurchasing qtvirtualkeyboard qtwebengine qtnetworkauth qtwebglplugin qtscript opengl'
           extra: '--base https://mirrors.dotsrc.org/qtproject --UNSAFE-ignore-hash'
           aqtsource: 'git+https://github.com/Kidev/aqtinstall.git@fix_linux_version'
 #          cached: 'false'

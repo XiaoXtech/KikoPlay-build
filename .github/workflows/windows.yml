@@ -1,73 +1,63 @@
-name: Windows64
-on: 
-  # push代码时触发workflow
-  push:
-    paths:
-      - 'build.pro'
-#      - '**'
-      - '.github/workflows/windows.yml'
-#  pull_request:
-#    paths:
-#      - '*.pro'
-#      - 'src/**'
-#      - '.github/workflows/windows.yml' 
+name:  KikoPlay build
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        required: true
+        default: 'XiaoXtech/KikoPlay-build'
+      ref:
+        required: true
+        default: 'master'
 
 jobs:
   build:
     name: Build
-    # 运行平台， windows-latest目前是windows server 2019 
-    # 参考文档 https://github.com/actions/virtual-environments/blob/main/images/win/Windows2019-Readme.md
+    # 运行平台,  windows-latest目前是windows server 2022
     runs-on: windows-2019
     strategy:
       # 矩阵配置
       matrix:
-        include:
-          # 5.15.2 参考 https://mirrors.cloud.tencent.com/qt/online/qtsdkrepository/windows_x86/desktop/qt5_5152/
-#          - qt_ver: 5.15.2
-#            qt_arch: win32_msvc2019
-#            msvc_arch: x86
-#            qt_arch_install: msvc2019
-          - qt_ver: 5.15.2          
-            qt_arch: win64_msvc2019_64
-            msvc_arch: x64
-            qt_arch_install: msvc2019_64          
+        qt_ver: [5.15.2]
+        qt_target: [desktop]
+        qt_host: [windows]
+        # mingw用不了
+        # qt_arch: [win64_msvc2017_64, win32_msvc2017, win32_mingw53,win32_mingw73]
+        qt_arch: [win64_msvc2015_64]
+        msvc_arch: [x64]
 
-    env:
-      targetName: KikoPlay.exe
-    # 步骤
     steps:
-      # 安装Qt
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.repo }}
+          ref: ${{ github.event.inputs.ref }}
+          fetch-depth: 1
+      - name: Install msvc
+        uses: ilammy/msvc-dev-cmd@v1
       - name: Install Qt
-        # 使用外部action。这个action专门用来安装Qt
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@v3
         with:
           # Version of Qt to install
           version: ${{ matrix.qt_ver }}
+          host: ${{ matrix.qt_host }}
           # Target platform for build
-          # target: ${{ matrix.qt_target }}
+          target: ${{ matrix.qt_target }}
+          # Architecture for Windows/Android
           arch: ${{ matrix.qt_arch }}
-          modules: 'qtcharts qtdatavis3d qtpurchasing qtvirtualkeyboard qtwebengine qtnetworkauth qtwebglplugin qtscript opengl'
-          extra: '--base https://mirrors.dotsrc.org/qtproject --UNSAFE-ignore-hash'
-          aqtsource: 'git+https://github.com/Kidev/aqtinstall.git@fix_linux_version'
-#          cached: 'false'
-#          aqtversion: '==2.0.5'          
-
-      # 拉取代码
-      - uses: actions/checkout@v4
+          tools: 'tools_qtcreator,qt.tools.qtcreator'
+      - name: Install vcpkg
+        uses: lukka/run-vcpkg@v10
         with:
-          fetch-depth: 1
-      # msvc编译
-      - name: msvc-build
-        id: build
+          # Location of the vcpkg as submodule of the repository.
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgGitCommitId: '4dacd997a589a9ed67a5d74ed580056ad0341775'
+          runVcpkgInstall: true
+      - name: Build kikoplay
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.msvc_arch }}
-          qmake build.pro
-          nmake
-          echo winSdkDir=%WindowsSdkDir% >> %GITHUB_ENV%
-          echo winSdkVer=%WindowsSdkVersion% >> %GITHUB_ENV%
-          echo vcToolsInstallDir=%VCToolsInstallDir% >> %GITHUB_ENV%
-          echo vcToolsRedistDir=%VCToolsRedistDir% >> %GITHUB_ENV%
+          call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64
+          cmake -G "Visual Studio 14 2015" -A "x64" -B build -S . "-DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake" -DUSE_VCPKG_QT=FALSE -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
       # 打包 
       - name: package
         id: package      
